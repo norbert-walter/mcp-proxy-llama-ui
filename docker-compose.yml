@@ -9,5 +9,7 @@ services:
       - "8093:8093"   # duckduckgo   → http://localhost:8093/mcp
       - "8094:8094"   # filesystem   → http://localhost:8094/mcp
       # - "8095:8095" # nächster Server
+    environment:
+      - MCP_DATA_PATH=${MCP_DATA_PATH:-/data}
     volumes:
-      - /home/norbert/mcp-data:/data   # Host-Pfad anpassen; :ro für read-only
+      - ${MCP_DATA_PATH:-/data}:/data
