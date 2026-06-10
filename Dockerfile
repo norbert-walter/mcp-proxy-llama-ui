@@ -10,12 +10,17 @@ RUN pip install --no-cache-dir \
         supervisor \
         mcp-proxy \
         mcp-server-fetch \
-        mcp-server-time
+        mcp-server-time \
+        "duckduckgo-mcp-server[browser]" \
+        mcp-filesystem
+
+# Config für mcp-filesystem: erlaubtes Verzeichnis /data
+RUN mkdir -p /etc/mcp && echo '{"allowed_directories": ["/data"]}' > /etc/mcp/filesystem.json
 
 # supervisord-Konfiguration einbinden
 COPY supervisord.conf /etc/supervisord.conf
 
 # Ports aller MCP-Server
-EXPOSE 8091 8092
+EXPOSE 8091 8092 8093 8094
 
 CMD ["/usr/local/bin/supervisord", "-c", "/etc/supervisord.conf"]

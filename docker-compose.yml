@@ -4,6 +4,10 @@ services:
     container_name: mcp-servers
     restart: unless-stopped
     ports:
-      - "8091:8091"   # fetch  → http://localhost:8091/mcp
-      - "8092:8092"   # time   → http://localhost:8092/mcp
-      # - "8093:8093" # nächster Server
+      - "8091:8091"   # fetch        → http://localhost:8091/mcp
+      - "8092:8092"   # time         → http://localhost:8092/mcp
+      - "8093:8093"   # duckduckgo   → http://localhost:8093/mcp
+      - "8094:8094"   # filesystem   → http://localhost:8094/mcp
+      # - "8095:8095" # nächster Server
+    volumes:
+      - /home/norbert/mcp-data:/data   # Host-Pfad anpassen; :ro für read-only
