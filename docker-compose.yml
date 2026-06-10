@@ -1,0 +1,9 @@
+services:
+  mcp-servers:
+    build: .
+    container_name: mcp-servers
+    restart: unless-stopped
+    ports:
+      - "8091:8091"   # fetch  → http://localhost:8091/mcp
+      - "8092:8092"   # time   → http://localhost:8092/mcp
+      # - "8093:8093" # nächster Server
