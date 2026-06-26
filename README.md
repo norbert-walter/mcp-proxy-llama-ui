@@ -1,8 +1,11 @@
 # mcp-servers
 
-Multi-MCP-Server-Container auf Basis von `python:3.12-slim`.  
+Multi-MCP-Server-Container auf Basis von `python:3.12-slim`.
+  
 Mehrere MCP-Server laufen parallel in einem einzigen Container, gesteuert durch `supervisord`.  
 Jeder Server wird über `mcp-proxy` als Streamable-HTTP-Endpunkt (`/mcp`) und SSE-Endpunkt (`/sse`) erreichbar gemacht.
+
+Der Multi-MCP-Server-Container kann lokal genutzt werden oder auch ins Internet gehostet werden. Bei einer öffentlichen Nutzung im Internet mit großen gehosteten KI-Modellen wie Claude und ChatGPT sollte ein HTTPS-Reverse-Proxy wie Nginx oder ähnlich benutzt werden. Claude und ChatGPT lassen sich aus Sicherheitsgründen nur über HTTPS-Verbindungen an den Multi-MCP-Server anbinden. 
 
 ## Enthaltene MCP-Server
 
@@ -29,16 +32,16 @@ Beim ersten Start wird das Image gebaut (~2–5 Min, da `mcp-file-edit` aus GitH
 ### Eigenes Datenverzeichnis setzen
 
 ```bash
-MCP_DATA_PATH=/home/norbert/mcp-data docker compose up -d --build
+MCP_DATA_PATH=/home/user/mcp-data docker compose up -d --build
 ```
 
 Oder `.env`-Datei im selben Verzeichnis anlegen:
 
 ```env
-MCP_DATA_PATH=/home/norbert/mcp-data
+MCP_DATA_PATH=/home/user/mcp-data
 ```
 
-Ohne Angabe wird `/data` auf dem Host verwendet (wird von Docker automatisch angelegt).
+Ohne einen Pfadangabe zu einem lokalen Dateiverzeichnis wird `/data` isoliert von der Außenwelt auf dem Host verwendet. Es wird von Docker automatisch angelegt und ist auf den Docker-Container begrenzt. Nach einem Neustart des Docker-Containers ist /data leer und verliert alle gespeicherten Dateien. Verwenden Sie dagegen eine Pfadangabe zu einem lokalen Dateiverzeichnis, so wird der Verzeichnisinhalt unter /data nutzbar. Das Docker-Host-System kann entfernte Verzeichnisse über /data im Docker-Container einbinden. Datei-Operationen können lesend und schreibend nur auf /data ausgeführt werden. Darüber hinaus ist ein Zugriff nicht möglich.
 
 ## Endpunkte
 
@@ -56,10 +59,10 @@ Anstelle von `localhost` kann auch die lokale IP-Adresse des Hosts verwendet wer
 
 ### llama-ui / llama-server
 
-llama-ui unterstützt MCP-Server über die Settings-Oberfläche.  
+llama-ui unterstützt MCP-Server mit Streamable HTTP über die Settings-Oberfläche.  
 Jeden Server einzeln eintragen:
 
-→ llama-ui → Settings → MCP Servers → URL eintragen → „Use llama server proxy" aktivieren (wenn llama-server mit `--webui-mcp-proxy` gestartet)
+→ llama-ui → MCP Servers → Add New Server → URL eintragen → „Use llama server proxy" aktivieren (wenn llama-server mit `--webui-mcp-proxy` gestartet)
 
 ```
 http://localhost:8091/mcp   # fetch
@@ -68,45 +71,12 @@ http://localhost:8093/mcp   # duckduckgo
 http://localhost:8094/mcp   # file-edit
 ```
 
-### Claude Desktop
+### Claude Desktop und Claude Web Client
 
-In `~/.config/Claude/claude_desktop_config.json` (Linux) bzw. `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+Claude Desktop und Claude Web Client unterstützt MCP-Server mit SSE (legacy) über die Settings-Oberfläche.  
+Jeden Server einzeln eintragen:
 
-```json
-{
-  "mcpServers": {
-    "mcp-fetch": {
-      "type": "http",
-      "url": "http://localhost:8091/mcp"
-    },
-    "mcp-time": {
-      "type": "http",
-      "url": "http://localhost:8092/mcp"
-    },
-    "mcp-duckduckgo": {
-      "type": "http",
-      "url": "http://localhost:8093/mcp"
-    },
-    "mcp-file-edit": {
-      "type": "http",
-      "url": "http://localhost:8094/mcp"
-    }
-  }
-}
-```
-
-Claude Desktop neu starten — die Server erscheinen dann im Tool-Menü (Hammer-Icon).
-
-> **Hinweis:** Claude Desktop erreichtr nur `localhost`-URLs, wenn der Container auf demselben Rechner läuft. Für Remotezugriff einen HTTPS-Reverse-Proxy (z.B. Nginx Proxy Manager) vorschalten.
-
-### ChatGPT (Custom Connectors / GPT Actions)
-
-ChatGPT unterstützt MCP-Server über Custom Connectors (ChatGPT Plus/Team/Enterprise).  
-Die Endpunkte müssen über HTTPS erreichbar sein — `localhost` funktioniert nicht direkt.
-
-Voraussetzung: öffentlich erreichbare HTTPS-URL, z.B. via Nginx Proxy Manager oder Cloudflare Tunnel.
-
-→ ChatGPT → Explore GPTs → Create → Configure → Add Action → Import from URL:
+→ User → Einstellungen → Konnektoren Anpassen → Plus (Benutzerdefinierte Konnektoren hinzufügen) → Namen eintragen → URL eintragen → Hinzufügen
 
 ```
 https://your-domain.example.com/fetch/mcp
@@ -115,7 +85,37 @@ https://your-domain.example.com/duckduckgo/mcp
 https://your-domain.example.com/file-edit/mcp
 ```
 
-Alternativ kann jeder Server als separater Custom Connector eingetragen werden.
+Claude Desktop neu starten — die Server erscheinen dann unter Konnektoren.
+
+> **Hinweis:** Claude Desktop erreichr nur `localhost`-URLs, wenn der Container auf demselben Rechner läuft. Für Remotezugriff einen HTTPS-Reverse-Proxy (z.B. Nginx Proxy Manager) vorschalten.
+
+### ChatGPT (Custom Connectors / GPT Actions)
+
+ChatGPT unterstützt MCP-Server über Custom Connectors (ChatGPT Plus/Team/Enterprise) via SSE.  
+Die Endpunkte müssen über HTTPS erreichbar sein — `localhost` funktioniert nicht direkt.
+
+Voraussetzung: öffentlich erreichbare HTTPS-URL, z.B. via Nginx Proxy Manager oder Cloudflare Tunnel. Um externe MCP-Services konfigurieren zu können, muss der Entwicklermode aktiviert werden.
+
+→ User → Einstellungen → Apps → Erweiterte Einstellungen → Entwicklermodus → Checkbox aktivieren
+
+Die MCP-Services werden dann wie folgt konfiguriert:
+
+→ User → Einstellungen → Apps → App erstellen
+
+**Name:** MCP-Tool-Name
+**Beschreibung:** Erklärung zum MCP-Tool
+**Verbindung:** HTTP-Verbindung (siehe unten)
+**Authentifizierung:** Keine Authentifizierung
+**Checkbox:** aktivieren (Sicherheitsinfo)
+
+```
+https://your-domain.example.com/fetch/sse
+https://your-domain.example.com/time/sse
+https://your-domain.example.com/duckduckgo/sse
+https://your-domain.example.com/file-edit/sse
+```
+
+Jeder Server wird als separater Custom Connector eingetragen.
 
 ## Testen
 
