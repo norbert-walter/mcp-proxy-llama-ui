@@ -1,15 +1,16 @@
 services:
   mcp-servers:
     build: .
+    image: mcp-proxy-llama-ui:1.0.0
     container_name: mcp-servers
     restart: unless-stopped
     ports:
-      - "8091:8091"   # fetch        → http://localhost:8091/mcp
-      - "8092:8092"   # time         → http://localhost:8092/mcp
-      - "8093:8093"   # duckduckgo   → http://localhost:8093/mcp
-      - "8094:8094"   # filesystem   → http://localhost:8094/mcp
-      # - "8095:8095" # nächster Server
+      - "8091:8091"   # fetch        → http://localhost:8091/mcp or http://localhost:8091/sse
+      - "8092:8092"   # time         → http://localhost:8092/mcp or http://localhost:8092/sse
+      - "8093:8093"   # duckduckgo   → http://localhost:8093/mcp or http://localhost:8093/sse
+      - "8094:8094"   # file-edit    → http://localhost:8094/mcp or http://localhost:8094/sse
     environment:
       - MCP_DATA_PATH=${MCP_DATA_PATH:-/data}
     volumes:
       - ${MCP_DATA_PATH:-/data}:/data
+
