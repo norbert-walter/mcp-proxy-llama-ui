@@ -73,7 +73,7 @@ http://localhost:8094/mcp   # file-edit
 
 ### Claude Desktop und Claude Web Client
 
-Claude Desktop und Claude Web Client unterstützt MCP-Server mit SSE (legacy) über die Settings-Oberfläche.  
+Claude Desktop und Claude Web Client unterstützt MCP-Server mit Streamable HTTP über die Settings-Oberfläche.  
 Jeden Server einzeln eintragen:
 
 → User → Einstellungen → Konnektoren Anpassen → Plus (Benutzerdefinierte Konnektoren hinzufügen) → Namen eintragen → URL eintragen → Hinzufügen
@@ -85,7 +85,7 @@ https://your-domain.example.com/duckduckgo/mcp
 https://your-domain.example.com/file-edit/mcp
 ```
 
-Claude Desktop neu starten — die Server erscheinen dann unter Konnektoren.
+Claude Desktop neu starten — die MCP-Server erscheinen dann unter Konnektoren.
 
 > **Hinweis:** Claude Desktop erreichr nur `localhost`-URLs, wenn der Container auf demselben Rechner läuft. Für Remotezugriff einen HTTPS-Reverse-Proxy (z.B. Nginx Proxy Manager) vorschalten.
 
@@ -102,13 +102,14 @@ Die MCP-Services werden dann wie folgt konfiguriert:
 
 → User → Einstellungen → Apps → App erstellen
 
-**Name:** MCP-Tool-Name
-**Beschreibung:** Erklärung zum MCP-Tool
-**Verbindung:** HTTP-Verbindung (siehe unten)
-**Authentifizierung:** Keine Authentifizierung
-**Checkbox:** aktivieren (Sicherheitsinfo)
-
 ```
+Name: MCP-Tool-Name
+Beschreibung: Erklärung zum MCP-Tool
+Verbindung: HTTP-Verbindung (siehe unten)
+Authentifizierung: Keine Authentifizierung
+Checkbox: aktivieren (Sicherheitsinfo)
+
+
 https://your-domain.example.com/fetch/sse
 https://your-domain.example.com/time/sse
 https://your-domain.example.com/duckduckgo/sse
