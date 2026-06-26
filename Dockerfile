@@ -1,11 +1,11 @@
 # ============================================================
 # Multi-MCP-Server Container (Option B)
-# Basis: python:slim (kein fremder ENTRYPOINT)
-# supervisord startet mehrere mcp-proxy-Instanzen
+# Base: python:slim (no custom ENTRYPOINT)
+# supervisord starts multiple mcp-proxy instances
 # ============================================================
 FROM python:3.12-slim
 
-# supervisor + mcp-proxy + alle MCP-Server installieren
+# Install supervisor + mcp-proxy + all MCP servers
 RUN pip install --no-cache-dir \
         supervisor \
         mcp-proxy \
@@ -13,10 +13,10 @@ RUN pip install --no-cache-dir \
         mcp-server-time \
         "duckduckgo-mcp-server[browser]"
 
-# mcp-file-edit aus GitHub installieren (kein PyPI-Paket verfügbar)
-# asyncssh hängt von cryptography/cffi ab → temporäre Build-Tools nötig
-# Upstream-Bug: leeres email-Feld in pyproject.toml bricht neuere setuptools
-#   → sed entfernt ', email = ""' vor pip install
+# Install mcp-file-edit from GitHub (no PyPI package available)
+# asyncssh depends on cryptography/cffi → temporary build tools required
+# Upstream bug: empty email field in pyproject.toml breaks newer setuptools
+#   → sed removes ', email = ""' before pip install
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         git \
@@ -29,10 +29,10 @@ RUN apt-get update \
     && apt-get purge -y --auto-remove build-essential libffi-dev libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# supervisord-Konfiguration einbinden
+# Copy supervisord configuration
 COPY supervisord.conf /etc/supervisord.conf
 
-# Ports aller MCP-Server
+# Expose ports for all MCP servers
 EXPOSE 8091 8092 8093 8094
 
 CMD ["/usr/local/bin/supervisord", "-c", "/etc/supervisord.conf"]

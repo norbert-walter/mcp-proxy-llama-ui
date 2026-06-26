@@ -1,52 +1,52 @@
 # mcp-servers
 
-Multi-MCP-Server-Container auf Basis von `python:3.12-slim`.
-  
-Mehrere MCP-Server laufen parallel in einem einzigen Container, gesteuert durch `supervisord`.  
-Jeder Server wird über `mcp-proxy` als Streamable-HTTP-Endpunkt (`/mcp`) und SSE-Endpunkt (`/sse`) erreichbar gemacht.
+Multi-MCP-Server container based on `python:3.12-slim`.
 
-Der Multi-MCP-Server-Container kann lokal genutzt werden oder auch ins Internet gehostet werden. Bei einer öffentlichen Nutzung im Internet mit großen gehosteten KI-Modellen wie Claude und ChatGPT sollte ein HTTPS-Reverse-Proxy wie Nginx oder ähnlich benutzt werden. Claude und ChatGPT lassen sich aus Sicherheitsgründen nur über HTTPS-Verbindungen an den Multi-MCP-Server anbinden. 
+Multiple MCP servers run in parallel within a single container, managed by `supervisord`.  
+Each server is exposed via `mcp-proxy` as a Streamable HTTP endpoint (`/mcp`) and an SSE endpoint (`/sse`).
 
-## Enthaltene MCP-Server
+The Multi-MCP-Server container can be used locally or hosted on the internet. For public internet use with large hosted AI models such as Claude and ChatGPT, an HTTPS reverse proxy such as Nginx or similar should be used. Claude and ChatGPT only allow connections to MCP servers over HTTPS for security reasons.
 
-| Port | Service | Tools | Beschreibung |
-|------|---------|-------|--------------|
-| 8091 | `mcp-fetch` | `fetch` | URL abrufen und Inhalt als Markdown zurückgeben; unterstützt chunk-weises Lesen via `start_index` |
-| 8092 | `mcp-time` | `get_current_time`, `convert_time` | Aktuelle Uhrzeit in einer IANA-Zeitzone abfragen; Zeiten zwischen Zeitzonen umrechnen |
-| 8093 | `mcp-duckduckgo` | `search`, `fetch_content` | Websuche über DuckDuckGo mit Titel, URL und Snippet; Webseiteninhalt abrufen und als Text parsen |
-| 8094 | `mcp-file-edit` | `read_file`, `write_file`, `create_file`, `delete_file`, `move_file`, `copy_file`, `list_files`, `search_files`, `replace_in_files`, `patch_file`, `list_functions`, `set_project_directory`, `git_*`, `ssh_upload`, `ssh_download`, `ssh_sync` | Umfassende Dateioperationen, Code-Analyse, Git-Integration und SSH-Dateitransfer |
+## Included MCP Servers
 
-## Voraussetzungen
+| Port | Service | Tools | Description |
+|------|---------|-------|-------------|
+| 8091 | `mcp-fetch` | `fetch` | Fetch a URL and return its content as Markdown; supports chunk-based reading via `start_index` |
+| 8092 | `mcp-time` | `get_current_time`, `convert_time` | Query the current time in an IANA timezone; convert times between timezones |
+| 8093 | `mcp-duckduckgo` | `search`, `fetch_content` | Web search via DuckDuckGo with title, URL and snippet; fetch and parse webpage content as plain text |
+| 8094 | `mcp-file-edit` | `read_file`, `write_file`, `create_file`, `delete_file`, `move_file`, `copy_file`, `list_files`, `search_files`, `replace_in_files`, `patch_file`, `list_functions`, `set_project_directory`, `git_*`, `ssh_upload`, `ssh_download`, `ssh_sync` | Comprehensive file operations, code analysis, Git integration and SSH file transfer |
+
+## Prerequisites
 
 - Docker + Docker Compose
-- Optional: ein lokales Verzeichnis für `mcp-file-edit` (Standard: `/data` auf dem Host)
+- Optional: a local directory for `mcp-file-edit` (default: `/data` on the host)
 
-## Starten
+## Starting
 
 ```bash
 docker compose up -d --build
 ```
 
-Beim ersten Start wird das Image gebaut (~2–5 Min, da `mcp-file-edit` aus GitHub kompiliert wird).
+The image is built on first start (~2–5 min, as `mcp-file-edit` is compiled from GitHub).
 
-### Eigenes Datenverzeichnis setzen
+### Setting a custom data directory
 
 ```bash
 MCP_DATA_PATH=/home/user/mcp-data docker compose up -d --build
 ```
 
-Oder `.env`-Datei im selben Verzeichnis anlegen:
+Or create a `.env` file in the same directory:
 
 ```env
 MCP_DATA_PATH=/home/user/mcp-data
 ```
 
-Ohne einen Pfadangabe zu einem lokalen Dateiverzeichnis wird `/data` isoliert von der Außenwelt auf dem Host verwendet. Es wird von Docker automatisch angelegt und ist auf den Docker-Container begrenzt. Nach einem Neustart des Docker-Containers ist /data leer und verliert alle gespeicherten Dateien. Verwenden Sie dagegen eine Pfadangabe zu einem lokalen Dateiverzeichnis, so wird der Verzeichnisinhalt unter /data nutzbar. Das Docker-Host-System kann entfernte Verzeichnisse über /data im Docker-Container einbinden. Datei-Operationen können lesend und schreibend nur auf /data ausgeführt werden. Darüber hinaus ist ein Zugriff nicht möglich.
+Without a path to a local directory, `/data` is used in isolation on the host. It is created automatically by Docker and is limited to the Docker container. After restarting the Docker container, `/data` is empty and all stored files are lost. If a path to a local directory is specified, its contents become accessible under `/data`. The Docker host system can mount remote directories into the container via `/data`. File operations can be performed read and write only within `/data`. Access beyond this path is not possible.
 
-## Endpunkte
+## Endpoints
 
-Jeder Server ist über zwei Protokolle erreichbar — Streamable HTTP (`/mcp`) und SSE (`/sse`).  
-Anstelle von `localhost` kann auch die lokale IP-Adresse des Hosts verwendet werden, z.B. `http://192.168.1.100:8091/mcp`. Das ist sinnvoll, wenn der Container auf einem anderen Rechner im Netzwerk läuft (z.B. NAS, Server) und der MCP-Client von einem anderen Gerät darauf zugreift.
+Each server is reachable via two protocols — Streamable HTTP (`/mcp`) and SSE (`/sse`).  
+Instead of `localhost`, the local IP address of the host can also be used, e.g. `http://192.168.1.100:8091/mcp`. This is useful when the container runs on a different machine in the network (e.g. NAS, server) and the MCP client accesses it from another device.
 
 | Service | Streamable HTTP | SSE (legacy) |
 |---------|----------------|--------------|
@@ -59,10 +59,10 @@ Anstelle von `localhost` kann auch die lokale IP-Adresse des Hosts verwendet wer
 
 ### llama-ui / llama-server
 
-llama-ui unterstützt MCP-Server mit Streamable HTTP über die Settings-Oberfläche.  
-Jeden Server einzeln eintragen:
+llama-ui supports MCP servers with Streamable HTTP via the Settings interface.  
+Add each server individually:
 
-→ llama-ui → MCP Servers → Add New Server → URL eintragen → „Use llama server proxy" aktivieren (wenn llama-server mit `--webui-mcp-proxy` gestartet)
+→ llama-ui → MCP Servers → Add New Server → Enter URL → Enable "Use llama server proxy" (if llama-server was started with `--webui-mcp-proxy`)
 
 ```
 http://localhost:8091/mcp   # fetch
@@ -71,12 +71,12 @@ http://localhost:8093/mcp   # duckduckgo
 http://localhost:8094/mcp   # file-edit
 ```
 
-### Claude Desktop und Claude Web Client
+### Claude Desktop and Claude Web Client
 
-Claude Desktop und Claude Web Client unterstützt MCP-Server mit Streamable HTTP über die Settings-Oberfläche.  
-Jeden Server einzeln eintragen:
+Claude Desktop and the Claude Web Client support MCP servers with Streamable HTTP via the Settings interface.  
+Add each server individually:
 
-→ User → Einstellungen → Konnektoren Anpassen → Plus (Benutzerdefinierte Konnektoren hinzufügen) → Namen eintragen → URL eintragen → Hinzufügen
+→ User → Settings → Customize Connectors → Plus (Add custom connectors) → Enter name → Enter URL → Add
 
 ```
 https://your-domain.example.com/fetch/mcp
@@ -85,29 +85,29 @@ https://your-domain.example.com/duckduckgo/mcp
 https://your-domain.example.com/file-edit/mcp
 ```
 
-Claude Desktop neu starten — die MCP-Server erscheinen dann unter Konnektoren.
+Restart Claude Desktop — the MCP servers will then appear under Connectors.
 
-> **Hinweis:** Claude Desktop erreichr nur `localhost`-URLs, wenn der Container auf demselben Rechner läuft. Für Remotezugriff einen HTTPS-Reverse-Proxy (z.B. Nginx Proxy Manager) vorschalten.
+> **Note:** Claude Desktop can only reach `localhost` URLs when the container runs on the same machine. For remote access, use an HTTPS reverse proxy (e.g. Nginx Proxy Manager).
 
 ### ChatGPT (Custom Connectors / GPT Actions)
 
-ChatGPT unterstützt MCP-Server über Custom Connectors (ChatGPT Plus/Team/Enterprise) via SSE.  
-Die Endpunkte müssen über HTTPS erreichbar sein — `localhost` funktioniert nicht direkt.
+ChatGPT supports MCP servers via Custom Connectors (ChatGPT Plus/Team/Enterprise) using SSE.  
+Endpoints must be reachable over HTTPS — `localhost` does not work directly.
 
-Voraussetzung: öffentlich erreichbare HTTPS-URL, z.B. via Nginx Proxy Manager oder Cloudflare Tunnel. Um externe MCP-Services konfigurieren zu können, muss der Entwicklermode aktiviert werden.
+Prerequisite: a publicly reachable HTTPS URL, e.g. via Nginx Proxy Manager or Cloudflare Tunnel. To configure external MCP services, Developer Mode must be enabled first.
 
-→ User → Einstellungen → Apps → Erweiterte Einstellungen → Entwicklermodus → Checkbox aktivieren
+→ User → Settings → Apps → Advanced Settings → Developer Mode → Enable checkbox
 
-Die MCP-Services werden dann wie folgt konfiguriert:
+The MCP services are then configured as follows:
 
-→ User → Einstellungen → Apps → App erstellen
+→ User → Settings → Apps → Create App
 
 ```
-Name: MCP-Tool-Name
-Beschreibung: Erklärung zum MCP-Tool
-Verbindung: HTTP-Verbindung (siehe unten)
-Authentifizierung: Keine Authentifizierung
-Checkbox: aktivieren (Sicherheitsinfo)
+Name: MCP tool name
+Description: Explanation of the MCP tool
+Connection: HTTP connection (see below)
+Authentication: No authentication
+Checkbox: enable (security notice)
 
 
 https://your-domain.example.com/fetch/sse
@@ -116,11 +116,11 @@ https://your-domain.example.com/duckduckgo/sse
 https://your-domain.example.com/file-edit/sse
 ```
 
-Jeder Server wird als separater Custom Connector eingetragen.
+Each server is added as a separate Custom Connector.
 
-## Testen
+## Testing
 
-Verbindung und Tool-Listing für jeden Server prüfen:
+Check the connection and tool listing for each server:
 
 ```bash
 # mcp-fetch
@@ -144,30 +144,30 @@ curl -s -X POST http://localhost:8094/mcp \
   -d '{"jsonrpc":"2.0","method":"tools/list","id":1}' | jq .
 ```
 
-Jede Antwort sollte ein `tools`-Array mit den verfügbaren Tools des jeweiligen Servers enthalten.
+Each response should contain a `tools` array with the available tools of the respective server.
 
 ## Logs
 
 ```bash
-# Alle Server
+# All servers
 docker compose logs -f
 
-# Einzelner Server (stderr-Logs)
+# Individual server (stderr logs)
 docker exec mcp-servers cat /tmp/mcp-fetch.err
 docker exec mcp-servers cat /tmp/mcp-time.err
 docker exec mcp-servers cat /tmp/mcp-duckduckgo.err
 docker exec mcp-servers cat /tmp/mcp-file-edit.err
 ```
 
-## Stoppen
+## Stopping
 
 ```bash
 docker compose down
 ```
 
-## Einen weiteren MCP-Server hinzufügen
+## Adding another MCP server
 
-1. Paket in `Dockerfile` zur `pip install`-Liste hinzufügen
-2. Neuen `[program:mcp-xyz]`-Block in `supervisord.conf` eintragen (nächster freier Port ab 8095)
-3. Port in `docker-compose.yml` ergänzen
-4. Image neu bauen: `docker compose up -d --build`
+1. Add the package to the `pip install` list in `Dockerfile`
+2. Add a new `[program:mcp-xyz]` block in `supervisord.conf` (next available port starting from 8095)
+3. Add the port in `docker-compose.yml`
+4. Rebuild the image: `docker compose up -d --build`
